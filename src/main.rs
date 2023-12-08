@@ -75,7 +75,7 @@ pub fn cleanup(project_name: &str) {
     fs::copy(compiled_file, &target_file).expect("Failed to copy compiled file");
     fs::remove_dir_all(project_path).expect("Failed to remove Rust project folder");
 
-    let mut file = File::open(target_file).expect("Failed to open file");
+    let file = File::open(target_file).expect("Failed to open file");
     let mut buf_reader = BufReader::new(file);
     let mut hasher = Sha256::new();
     let mut buffer = [0; 1024];
