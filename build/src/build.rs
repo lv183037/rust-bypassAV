@@ -15,7 +15,6 @@ use tools::{aesdecryption, main_, main_imports, maincargo, ntloader};
 use xz2::write::XzEncoder;
 
 pub fn setupcargo(project_name: &str) {
-    // let project_name = "ma";
 
     // 创建命令
     let output = Command::new("cargo")

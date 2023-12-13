@@ -1,3 +1,4 @@
+#![allow(warnings)]
 use std::{
     env,
     fs::{self, File},
@@ -17,15 +18,13 @@ fn main() {
         .map(|_| rng.gen_range(b'A'..=b'Z') as char) // 生成大写字母
         .collect();
 
-    // 打印随机字符串
-    println!("Random String: {}", random_string);
+    // println!("Random String: {}", random_string);
     setupcargo(&random_string);
     buildfile(&random_string);
-    cleanup(&random_string);
+    // cleanup(&random_string);
 }
 
 fn buildfile(project_name: &str) {
-    // let project_name = "ma".to_string();
     let original_path = env::current_dir().unwrap();
     let project_path = original_path.join(project_name);
     env::set_current_dir(&project_path).expect("Failed to change directory to Rust project");

