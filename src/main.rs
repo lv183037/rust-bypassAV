@@ -21,7 +21,7 @@ fn main() {
     // println!("Random String: {}", random_string);
     setupcargo(&random_string);
     buildfile(&random_string);
-    // cleanup(&random_string);
+    cleanup(&random_string);
 }
 
 fn buildfile(project_name: &str) {

